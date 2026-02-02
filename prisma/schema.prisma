@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Contact {
+  id        String   @id // jid: 5535...@s.whatsapp.net
+  pushName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages  Message[]
+  summaries Summary[]
+}
+
+model Message {
+  id        String   @id // msg.key.id
+  contactId String
+  text      String
+  fromMe    Boolean
+  timestamp DateTime
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id])
+
+  @@index([contactId])
+  @@index([timestamp])
+}
+
+model Summary {
+  id        String   @id @default(cuid())
+  contactId String   @unique
+  content   String
+  fromDate  DateTime
+  toDate    DateTime
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id])
+}
