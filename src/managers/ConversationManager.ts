@@ -5,6 +5,7 @@ import { OllamaService } from "../services/OllamaService";
 import logger from "../utils/pino";
 import { randomUUID } from "crypto";
 import { saveOrUpdateSummaryDB } from "../database/functions/upsertSummary";
+import { getSummary } from "../database/functions/getSummary";
 
 interface ContactState {
   buffer: string[];
@@ -74,6 +75,10 @@ export class ConversationManager {
         (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
       );
 
+
+      // 1.5 Recupera resumo anterior
+      const summary = await getSummary(contactId);
+
       // 2. Monta o contexto
       let context = `
 Você está conversando no WhatsApp como uma pessoa comum.
@@ -81,8 +86,18 @@ Não representa empresa, suporte, clínica ou atendimento.
 Fale curto, natural, informal, com gírias leves.
 Não use listas nem explique nada.
 Responda como alguém responderia de verdade.
+REGRAS RÍGIDAS:
+- escreva sempre em letra minúscula.
+- não use emojis.
 
-Conversa até agora:
+`;
+
+      if (summary) {
+        context += `\nResumo do que já conversaram antes (IMPORTANTE):\n${summary}\n`;
+      }
+
+      context += `
+Conversa recente:
 `;
       for (const msg of sortedHistory) {
         const prefix = msg.fromMe ? "Você" : "Pessoa";
